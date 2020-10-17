@@ -1,3 +1,10 @@
+# Is in Jaque (color)
+# Is ahogado
+# Enroque
+# Coronacion
+
+
+
 from math import floor
 
 NEGRO=False
@@ -247,7 +254,7 @@ import pygame
 
 #Screen
 pygame.init()
-screen=pygame.display.set_mode((800,600))
+screen=pygame.display.set_mode((6 00,600))
 pygame.display.set_caption("Ajedrez")
 
 #Piezas
