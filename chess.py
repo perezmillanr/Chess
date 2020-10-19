@@ -1,11 +1,10 @@
-# Is in Jaque (color)
 # Is ahogado
-# Enroque
 # Coronacion
 
 
 
 from math import floor
+import copy
 
 NEGRO=False
 BLANCO=True
@@ -27,8 +26,7 @@ class Pieza:
     self.color=color
     self.setPieza(pieza)
     self.setPosition(x,y)
-    if self.pieza=="Peon" or self.pieza=="Rey" or self.pieza=="Torre":
-      self.ismoved=False
+    self.ismoved=False
 
   def setPieza(self,pieza):
     if pieza not in ["Peon","Torre","Alfil","Caballo","Dama","Rey"]:
@@ -55,21 +53,35 @@ class Pieza:
     else:
       self.x=x
       self.y=y
-      if self.pieza=="Peon" or self.pieza=="Rey" or self.pieza=="Torre":
-        self.ismoved=True
+      self.ismoved=True
   
   def moverPieza(self,x,y,tablero):
     """Mueve la piezas hacia esa posicion"""
-    availablepos=self.AvailablePositionsinTablero(tablero)
+    availablepos=self.AvailablePositionsinTablero2(tablero)
     found=False
     for p in availablepos:
       if x == p[0] and y == p[1]:
         found=True
         if p[2]:
           tablero.remove(tablero.GetPieza(x,y)) #Como la pieza
+
+        if self.getPieza()=="Rey" and [x,y] in self._addEnroque(tablero):
+          #Aca tenemos que mover la torre tambien porque es un enroque
+          self._moverTorreEnrocada (x,y,tablero)
         self.setPosition(x,y)
     if not found:
       raise PiezaNoEncontrada
+
+  def _moverTorreEnrocada(self,x,y,tablero):
+    """Mueve la torre en el marco del enroque"""
+    if [x,y] == [G,1]:
+      tablero.GetPieza(H,1).moverPieza(F,1,tablero)
+    if [x,y] == [C,1]:
+      tablero.GetPieza(A,1).moverPieza(D,1,tablero)
+    if [x,y] == [G,8]:
+      tablero.GetPieza(H,8).moverPieza(F,8,tablero)
+    if [x,y] == [C,8]:  
+      tablero.GetPieza(A,8).moverPieza(D,8,tablero)
 
   def isin(self,x,y):
     """Permite saber si la pieza esta en un casillero determinado"""
@@ -125,7 +137,7 @@ class Pieza:
           break
     return _avail
 
-  def _AvailablePositionsPieza(self):
+  def _AvailablePositionsPieza(self,tablero):
     """Devuelva las posiciones disponibles para esa pieza"""
     ##############
     #Caballo
@@ -151,20 +163,81 @@ class Pieza:
       for pos in [[self.x+1,self.y+1],[self.x+1,self.y-1],[self.x-1,self.y+1],[self.x-1,self.y-1],[self.x-1,self.y],[self.x+1,self.y],[self.x,self.y-1],[self.x,self.y+1]]:
         if Pieza._isinTablero(pos[0],pos[1]):
           _avail.append(pos)
-      return _avail
 
+      return _avail+self._addEnroque(tablero)
+
+
+  def _addEnroque(self,tablero):
+    """Suma las posiciones de enroque si aplica"""
+    _available=[]
+    if self.getColor()==BLANCO and tablero.GetPieza(H,1) and not tablero.GetPieza(G,1) and not tablero.GetPieza(F,1):
+      if tablero.GetPieza(H,1).getPieza()=="Torre":
+       if not tablero.GetPieza(H,1).ismoved:
+        if not self.ismoved:
+            _available.append([G,1])
+
+    if self.getColor()==BLANCO and tablero.GetPieza(A,1) and not tablero.GetPieza(B,1) and not tablero.GetPieza(C,1) and not tablero.GetPieza(D,1):
+      if tablero.GetPieza(A,1).getPieza()=="Torre":
+       if not tablero.GetPieza(A,1).ismoved:
+        if not self.ismoved:
+            _available.append([C,1])
+
+    if self.getColor()==NEGRO and tablero.GetPieza(H,8) and not tablero.GetPieza(G,8) and not tablero.GetPieza(F,8):
+      if tablero.GetPieza(H,8).getPieza()=="Torre":
+       if not tablero.GetPieza(H,8).ismoved:
+        if not self.ismoved:
+            _available.append([G,8])
+
+    if self.getColor()==NEGRO and tablero.GetPieza(A,8) and not tablero.GetPieza(B,8) and not tablero.GetPieza(C,8) and not tablero.GetPieza(D,8):
+      if tablero.GetPieza(A,8).getPieza()=="Torre":
+       if not tablero.GetPieza(A,8).ismoved:
+        if not self.ismoved:
+            _available.append([C,8])
+    return _available
+
+  def AvailablePositionsinTablero2_TOFIX(self,tablero):
+    _avail=[]
+    for [x,y,piezacontraria] in self.AvailablePositionsinTablero(tablero):
+      ##################################
+      _tablero=copy.copy(tablero)
+      _piezaauxiliar=_tablero.GetPieza(self.getPosition()[0],self.getPosition()[1])
+      if piezacontraria:
+        _tablero.remove(_tablero.GetPieza(x,y)) #Como la pieza
+      if _piezaauxiliar.getPieza()=="Rey" and [x,y] in _piezaauxiliar._addEnroque(_tablero):
+        #Aca tenemos que mover la torre tambien porque es un enroque
+        _piezaauxiliar._moverTorreEnrocada (x,y,_tablero)
+      _piezaauxiliar.setPosition(x,y)
+      ##################################
+      if not Pieza.isinJaque(self.getColor(),_tablero):
+        _avail.append([x,y])
+    return _avail
+
+  def AvailablePositionsinTablero2(self,tablero):  #TO FIX
+    _avail=[]
+    for available in self.AvailablePositionsinTablero(tablero):
+      _tablero=Tablero() 
+      #tablero auxiliar
+      _piezaauxiliar=copy.copy(self)
+      _piezaauxiliar.setPosition(available[0],available[1])
+      _tablero.append(_piezaauxiliar)
+      for p in tablero:
+          _tablero.append(copy.copy(p))
+
+      if not Pieza.isinJaque(self.getColor(),_tablero):
+        _avail.append(available)
+    return _avail
 
   def AvailablePositionsinTablero(self,tablero):
     """Devuelva las posiciones disponible spara esa pieza dado el tablero """
     #Falta Peon, Alfil, Dama, Torre
 
-    if self.getPieza()in ["Alfil","Torre","Dama"]:
+    if self.getPieza() in ["Alfil","Torre","Dama"]:
       return self._AvailablePositionsinTablero_AlfilTorreDama(tablero)
 
     if self.getPieza()== "Peon":
       return self._AvailablePositionsinTablero_Peon(tablero)
 
-    _avail=self._AvailablePositionsPieza()
+    _avail=self._AvailablePositionsPieza(tablero) #esta es para el rey y el caballo
     __avail=[]
     #Se fija que no haya otra pieza"
     for pos in _avail:
@@ -177,6 +250,26 @@ class Pieza:
     return __avail
 
 
+  @staticmethod
+  def isinJaque(color,tablero):
+    """Te dice si un Rey de un color determinado esta en Jacuqe"""
+    for p in tablero:
+      if p.color != color:
+        for pos in p.AvailablePositionsinTablero(tablero): #Uso la version uno de la funcion porque no quiero que me saque los escaques que pudiesen dejar al rey contrario en jacque porque estamos evaluando si ya estmaos en jaque
+          if pos[2] and pos[2].getPieza()=="Rey":
+            return True
+    return False
+
+  @staticmethod
+  def isinMate(color,tablero):
+    """Te dice si esta en mate"""
+    if Pieza.isinJaque(color,tablero):
+      for p in tablero:
+        if p.color == color:
+          for pos in p.AvailablePositionsinTablero(tablero): #Uso la version uno de la funcion porque no quiero que me saque los escaques que pudiesen dejar al rey contrario en jacque porque estamos evaluando si ya estmaos en jaque
+            return False
+      return True
+    return False
 
 class Tablero(list):
   def CasilleroOcupado(self,x,y):
@@ -199,7 +292,7 @@ class Tablero(list):
 
 tablero=Tablero()
 
-tablero.append(Pieza(BLANCO,"Peon",A,2))
+#tablero.append(Pieza(BLANCO,"Peon",A,2))
 tablero.append(Pieza(BLANCO,"Peon",B,2))
 tablero.append(Pieza(BLANCO,"Peon",C,2))
 tablero.append(Pieza(BLANCO,"Peon",D,2))
@@ -208,13 +301,16 @@ tablero.append(Pieza(BLANCO,"Peon",F,2))
 tablero.append(Pieza(BLANCO,"Peon",G,2))
 tablero.append(Pieza(BLANCO,"Peon",H,2))
 
-tablero.append(Pieza(BLANCO,"Torre",A,1))
-tablero.append(Pieza(BLANCO,"Caballo",B,1))
+piezatest=tablero.GetPieza(H,2)
+piezatest.color=NEGRO
+
+tablero.append(Pieza(NEGRO,"Torre",A,1))
+#tablero.append(Pieza(BLANCO,"Caballo",B,1))
 tablero.append(Pieza(BLANCO,"Alfil",C,1))
-tablero.append(Pieza(BLANCO,"Dama",D,1))
+#tablero.append(Pieza(BLANCO,"Dama",D,1))
 tablero.append(Pieza(BLANCO,"Rey",E,1))
-tablero.append(Pieza(BLANCO,"Alfil",F,1))
-tablero.append(Pieza(BLANCO,"Caballo",G,1))
+#tablero.append(Pieza(BLANCO,"Alfil",F,1))
+#tablero.append(Pieza(BLANCO,"Caballo",G,1))
 tablero.append(Pieza(BLANCO,"Torre",H,1))
 
 tablero.append(Pieza(NEGRO,"Peon",A,7))
@@ -340,7 +436,7 @@ while running:
  
       if not drag:
         if piez and piez.getColor()==turno:
-            availableEscaques=piez.AvailablePositionsinTablero(tablero)
+            availableEscaques=piez.AvailablePositionsinTablero2(tablero)
             selectedPieza=piez
             drag=True
         else:
@@ -352,9 +448,19 @@ while running:
             drag=False
             turno=NEGRO if turno==BLANCO else BLANCO
             availableEscaques=[]
+
+            if Pieza.isinJaque(BLANCO,tablero): 
+              print("Blanco en Jaque")
+            if Pieza.isinJaque(NEGRO,tablero): 
+              print("Negro en Jaque")
+            if Pieza.isinMate(BLANCO,tablero): 
+              print("Blanco en Jaque Mate")              
+            if Pieza.isinMate(NEGRO,tablero): 
+              print("Negro en Jaque Mate")              
             break
         if drag and piez and piez.getColor()==turno: #Solo entramos si es draf, evaluamos de nuevo eso en caso de que el for de arriba mueza pieza
-          availableEscaques=piez.AvailablePositionsinTablero(tablero)
+          availableEscaques=piez.AvailablePositionsinTablero2(tablero)
+          selectedPieza=piez
           drag=True
         else:
           availableEscaques=[]
