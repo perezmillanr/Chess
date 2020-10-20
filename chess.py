@@ -1,7 +1,5 @@
-# Coronacion
-
-
-
+#Author: Perez Millan Rodrigo
+#2020
 from math import floor
 import copy
 
@@ -26,6 +24,7 @@ class Pieza:
     self.setPieza(pieza)
     self.setPosition(x,y)
     self.ismoved=False
+    self.coronado=False
 
   def setPieza(self,pieza):
     if pieza not in ["Peon","Torre","Alfil","Caballo","Dama","Rey"]:
@@ -68,6 +67,14 @@ class Pieza:
           #Aca tenemos que mover la torre tambien porque es un enroque
           self._moverTorreEnrocada (x,y,tablero)
         self.setPosition(x,y)
+
+        if self.getPieza()=="Peon":
+          print(self.getPosition()[0])
+          if self.getColor()==NEGRO and self.getPosition()[1]==1:
+            self.coronado=True
+          if self.getColor()==BLANCO and self.getPosition()[1]==8:
+            self.coronado=True
+
     if not found:
       raise PiezaNoEncontrada
 
@@ -290,34 +297,23 @@ class Tablero(list):
 
 tablero=Tablero()
 
-#tablero.append(Pieza(BLANCO,"Peon",A,2))
-#tablero.append(Pieza(BLANCO,"Peon",B,2))
-#tablero.append(Pieza(BLANCO,"Peon",C,2))
-#tablero.append(Pieza(BLANCO,"Peon",D,2))
-#tablero.append(Pieza(BLANCO,"Peon",E,2))
-#tablero.append(Pieza(BLANCO,"Peon",F,2))
-#tablero.append(Pieza(BLANCO,"Peon",G,2))
-#tablero.append(Pieza(BLANCO,"Peon",H,2))
+tablero.append(Pieza(BLANCO,"Peon",A,2))
+tablero.append(Pieza(BLANCO,"Peon",B,2))
+tablero.append(Pieza(BLANCO,"Peon",C,2))
+tablero.append(Pieza(BLANCO,"Peon",D,2))
+tablero.append(Pieza(BLANCO,"Peon",E,2))
+tablero.append(Pieza(BLANCO,"Peon",F,2))
+tablero.append(Pieza(BLANCO,"Peon",G,2))
+tablero.append(Pieza(BLANCO,"Peon",H,2))
 
-#tablero.append(Pieza(BLANCO,"Torre",A,1))
-#tablero.append(Pieza(BLANCO,"Caballo",B,1))
-#tablero.append(Pieza(BLANCO,"Alfil",C,1))
-#tablero.append(Pieza(BLANCO,"Dama",D,1))
-#tablero.append(Pieza(BLANCO,"Rey",E,1))
-#tablero.append(Pieza(BLANCO,"Alfil",F,1))
-#tablero.append(Pieza(BLANCO,"Caballo",G,1))
-#tablero.append(Pieza(BLANCO,"Torre",H,1))
-
-
-tablero.append(Pieza(BLANCO,"Rey",G,2))
-tablero.append(Pieza(NEGRO,"Alfil",H,2))
-tablero.append(Pieza(NEGRO,"Alfil",G,1))
-
-tablero.append(Pieza(NEGRO,"Peon",F,3))
-tablero.append(Pieza(NEGRO,"Peon",F,2))
-tablero.append(Pieza(NEGRO,"Peon",G,3))
-tablero.append(Pieza(NEGRO,"Caballo",H,4))
-
+tablero.append(Pieza(BLANCO,"Torre",A,1))
+tablero.append(Pieza(BLANCO,"Caballo",B,1))
+tablero.append(Pieza(BLANCO,"Alfil",C,1))
+tablero.append(Pieza(BLANCO,"Dama",D,1))
+tablero.append(Pieza(BLANCO,"Rey",E,1))
+tablero.append(Pieza(BLANCO,"Alfil",F,1))
+tablero.append(Pieza(BLANCO,"Caballo",G,1))
+tablero.append(Pieza(BLANCO,"Torre",H,1))
 
 tablero.append(Pieza(NEGRO,"Peon",A,7))
 tablero.append(Pieza(NEGRO,"Peon",B,7))
@@ -472,6 +468,22 @@ while running:
               if Pieza.isAhogado(NEGRO,tablero) and turno==NEGRO:
                 print("Negro Ahogado")
 
+
+            for p in tablero:
+              if p.coronado:
+                p.coronado=False
+                option=""
+                while option not in ["a","b","c","d"]:
+                  if option!="":
+                    print("Opcion equivocada, pruebe de nuevo.")
+                  option=input("El peon ha sido coronado. Por favor, seleccione una pieza: (a) Dama ; (b) Alfil; (c) Caballo; (d) Torre ")
+                d={
+                "a":"Dama",
+                "b":"Alfil",
+                "c":"Caballo",
+                "d":"Torre"
+                }                  
+                p.setPieza(d[option])
             break
         if drag and piez and piez.getColor()==turno: #Solo entramos si es draf, evaluamos de nuevo eso en caso de que el for de arriba mueza pieza
           availableEscaques=piez.AvailablePositionsinTablero2(tablero)
