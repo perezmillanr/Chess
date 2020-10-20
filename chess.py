@@ -69,7 +69,6 @@ class Pieza:
         self.setPosition(x,y)
 
         if self.getPieza()=="Peon":
-          print(self.getPosition()[0])
           if self.getColor()==NEGRO and self.getPosition()[1]==1:
             self.coronado=True
           if self.getColor()==BLANCO and self.getPosition()[1]==8:
