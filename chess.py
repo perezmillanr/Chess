@@ -137,7 +137,7 @@ class Pieza:
           break
     return _avail
 
-  def _AvailablePositionsPieza(self,tablero):
+  def _AvailablePositionsPieza(self,tablero,EvaluateEnroque=True):
     """Devuelva las posiciones disponibles para esa pieza"""
     ##############
     #Caballo
@@ -164,70 +164,59 @@ class Pieza:
         if Pieza._isinTablero(pos[0],pos[1]):
           _avail.append(pos)
 
-      return _avail+self._addEnroque(tablero)
+      return _avail+(self._addEnroque(tablero) if EvaluateEnroque else [])
 
 
   def _addEnroque(self,tablero):
     """Suma las posiciones de enroque si aplica"""
+
+    #Este es el unico lugar del codigo donde uso isinjacque con EvaluateEnroque en false
+    #Esto es para evitar la recursion, evaluar enroque -> envaluo jaque -> evalua las availablepos de cada pieza contraria -> evaluo el enroque del otro rey -> etc etc
     _available=[]
-    if self.getColor()==BLANCO and tablero.GetPieza(H,1) and not tablero.GetPieza(G,1) and not tablero.GetPieza(F,1):
+    if self.getColor()==BLANCO and not Pieza.isinJaque(BLANCO,tablero,EvaluateEnroque=False) and tablero.GetPieza(H,1) and not tablero.GetPieza(G,1) and not tablero.GetPieza(F,1):
       if tablero.GetPieza(H,1).getPieza()=="Torre":
        if not tablero.GetPieza(H,1).ismoved:
         if not self.ismoved:
             _available.append([G,1])
 
-    if self.getColor()==BLANCO and tablero.GetPieza(A,1) and not tablero.GetPieza(B,1) and not tablero.GetPieza(C,1) and not tablero.GetPieza(D,1):
+    if self.getColor()==BLANCO and not Pieza.isinJaque(BLANCO,tablero,EvaluateEnroque=False) and tablero.GetPieza(A,1) and not tablero.GetPieza(B,1) and not tablero.GetPieza(C,1) and not tablero.GetPieza(D,1):
       if tablero.GetPieza(A,1).getPieza()=="Torre":
        if not tablero.GetPieza(A,1).ismoved:
         if not self.ismoved:
             _available.append([C,1])
 
-    if self.getColor()==NEGRO and tablero.GetPieza(H,8) and not tablero.GetPieza(G,8) and not tablero.GetPieza(F,8):
+    if self.getColor()==NEGRO and not Pieza.isinJaque(NEGRO,tablero,EvaluateEnroque=False) and tablero.GetPieza(H,8) and not tablero.GetPieza(G,8) and not tablero.GetPieza(F,8):
       if tablero.GetPieza(H,8).getPieza()=="Torre":
        if not tablero.GetPieza(H,8).ismoved:
         if not self.ismoved:
             _available.append([G,8])
 
-    if self.getColor()==NEGRO and tablero.GetPieza(A,8) and not tablero.GetPieza(B,8) and not tablero.GetPieza(C,8) and not tablero.GetPieza(D,8):
+    if self.getColor()==NEGRO and not Pieza.isinJaque(NEGRO,tablero,EvaluateEnroque=False) and tablero.GetPieza(A,8) and not tablero.GetPieza(B,8) and not tablero.GetPieza(C,8) and not tablero.GetPieza(D,8):
       if tablero.GetPieza(A,8).getPieza()=="Torre":
        if not tablero.GetPieza(A,8).ismoved:
         if not self.ismoved:
             _available.append([C,8])
     return _available
 
-  def AvailablePositionsinTablero2_TOFIX(self,tablero):
-    _avail=[]
-    for [x,y,piezacontraria] in self.AvailablePositionsinTablero(tablero):
-      ##################################
-      _tablero=copy.copy(tablero)
-      _piezaauxiliar=_tablero.GetPieza(self.getPosition()[0],self.getPosition()[1])
-      if piezacontraria:
-        _tablero.remove(_tablero.GetPieza(x,y)) #Como la pieza
-      if _piezaauxiliar.getPieza()=="Rey" and [x,y] in _piezaauxiliar._addEnroque(_tablero):
-        #Aca tenemos que mover la torre tambien porque es un enroque
-        _piezaauxiliar._moverTorreEnrocada (x,y,_tablero)
-      _piezaauxiliar.setPosition(x,y)
-      ##################################
-      if not Pieza.isinJaque(self.getColor(),_tablero):
-        _avail.append([x,y])
-    return _avail
-
   def AvailablePositionsinTablero2(self,tablero):  #TO FIX
     _avail=[]
     for available in self.AvailablePositionsinTablero(tablero):
       _tablero=Tablero() 
       #tablero auxiliar
-      _piezaauxiliar=copy.copy(self)
-      _piezaauxiliar.setPosition(available[0],available[1])
-      _tablero.append(_piezaauxiliar)
       for p in tablero:
           _tablero.append(copy.copy(p))
-
+      if available[2]:
+        _tablero.remove(_tablero.GetPieza(available[0],available[1])) #Como la pieza
+      if self.getPieza()=="Rey" and self.getPosition() in self._addEnroque(_tablero):
+        #Aca tenemos que mover la torre tambien porque es un enroque
+        _tablero.GetPieza(self.getPosition()[0],self.getPosition()[1])._moverTorreEnrocada (available[0],available[1],_tablero)
+      _tablero.GetPieza(self.getPosition()[0],self.getPosition()[1]).setPosition(available[0],available[1])
+      
       if not Pieza.isinJaque(self.getColor(),_tablero):
         _avail.append(available)
     return _avail
 
-  def AvailablePositionsinTablero(self,tablero):
+  def AvailablePositionsinTablero(self,tablero,EvaluateEnroque=True):
     """Devuelva las posiciones disponible spara esa pieza dado el tablero """
     #Falta Peon, Alfil, Dama, Torre
 
@@ -237,7 +226,7 @@ class Pieza:
     if self.getPieza()== "Peon":
       return self._AvailablePositionsinTablero_Peon(tablero)
 
-    _avail=self._AvailablePositionsPieza(tablero) #esta es para el rey y el caballo
+    _avail=self._AvailablePositionsPieza(tablero,EvaluateEnroque) #esta es para el rey y el caballo
     __avail=[]
     #Se fija que no haya otra pieza"
     for pos in _avail:
@@ -251,11 +240,11 @@ class Pieza:
 
 
   @staticmethod
-  def isinJaque(color,tablero):
+  def isinJaque(color,tablero,EvaluateEnroque=True):
     """Te dice si un Rey de un color determinado esta en Jacuqe"""
     for p in tablero:
       if p.color != color:
-        for pos in p.AvailablePositionsinTablero(tablero): #Uso la version uno de la funcion porque no quiero que me saque los escaques que pudiesen dejar al rey contrario en jacque porque estamos evaluando si ya estmaos en jaque
+        for pos in p.AvailablePositionsinTablero(tablero,EvaluateEnroque): #Uso la version uno de la funcion porque no quiero que me saque los escaques que pudiesen dejar al rey contrario en jacque porque estamos evaluando si ya estmaos en jaque
           if pos[2] and pos[2].getPieza()=="Rey":
             return True
     return False
@@ -266,7 +255,7 @@ class Pieza:
     if Pieza.isinJaque(color,tablero):
       for p in tablero:
         if p.color == color:
-          for pos in p.AvailablePositionsinTablero(tablero): #Uso la version uno de la funcion porque no quiero que me saque los escaques que pudiesen dejar al rey contrario en jacque porque estamos evaluando si ya estmaos en jaque
+          for pos in p.AvailablePositionsinTablero2(tablero): #Uso la version uno de la funcion porque no quiero que me saque los escaques que pudiesen dejar al rey contrario en jacque porque estamos evaluando si ya estmaos en jaque
             return False
       return True
     return False
@@ -292,7 +281,7 @@ class Tablero(list):
 
 tablero=Tablero()
 
-#tablero.append(Pieza(BLANCO,"Peon",A,2))
+tablero.append(Pieza(BLANCO,"Peon",A,2))
 tablero.append(Pieza(BLANCO,"Peon",B,2))
 tablero.append(Pieza(BLANCO,"Peon",C,2))
 tablero.append(Pieza(BLANCO,"Peon",D,2))
@@ -301,16 +290,13 @@ tablero.append(Pieza(BLANCO,"Peon",F,2))
 tablero.append(Pieza(BLANCO,"Peon",G,2))
 tablero.append(Pieza(BLANCO,"Peon",H,2))
 
-piezatest=tablero.GetPieza(H,2)
-piezatest.color=NEGRO
-
-tablero.append(Pieza(NEGRO,"Torre",A,1))
-#tablero.append(Pieza(BLANCO,"Caballo",B,1))
+tablero.append(Pieza(BLANCO,"Torre",A,1))
+tablero.append(Pieza(BLANCO,"Caballo",B,1))
 tablero.append(Pieza(BLANCO,"Alfil",C,1))
-#tablero.append(Pieza(BLANCO,"Dama",D,1))
+tablero.append(Pieza(BLANCO,"Dama",D,1))
 tablero.append(Pieza(BLANCO,"Rey",E,1))
-#tablero.append(Pieza(BLANCO,"Alfil",F,1))
-#tablero.append(Pieza(BLANCO,"Caballo",G,1))
+tablero.append(Pieza(BLANCO,"Alfil",F,1))
+tablero.append(Pieza(BLANCO,"Caballo",G,1))
 tablero.append(Pieza(BLANCO,"Torre",H,1))
 
 tablero.append(Pieza(NEGRO,"Peon",A,7))
@@ -471,18 +457,5 @@ while running:
   displayEscaques()
   displaySelected(availableEscaques)
   displayPiezas()
-
-  if turno==BLANCO:
-    pass
-    if drag:
-        pass
-    else:
-        pass
-  else:
-    pass
-    if drag:
-      pass
-    else:
-        pass
 
   pygame.display.update()
