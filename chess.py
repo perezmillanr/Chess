@@ -1,4 +1,3 @@
-# Is ahogado
 # Coronacion
 
 
@@ -260,6 +259,16 @@ class Pieza:
       return True
     return False
 
+  @staticmethod
+  def isAhogado(color,tablero):
+    """Te dice siel rey esta ahogado"""
+    _available=[]
+    for p in tablero:
+        if p.color == color:
+          for pos in p.AvailablePositionsinTablero2(tablero): #Uso la version uno de la funcion porque no quiero que me saque los escaques que pudiesen dejar al rey contrario en jacque porque estamos evaluando si ya estmaos en jaque
+            _available.append(pos)
+    return True if _available==[] and not Pieza.isinJaque(color,tablero) else False
+
 class Tablero(list):
   def CasilleroOcupado(self,x,y):
     for p in self:
@@ -281,23 +290,34 @@ class Tablero(list):
 
 tablero=Tablero()
 
-tablero.append(Pieza(BLANCO,"Peon",A,2))
-tablero.append(Pieza(BLANCO,"Peon",B,2))
-tablero.append(Pieza(BLANCO,"Peon",C,2))
-tablero.append(Pieza(BLANCO,"Peon",D,2))
-tablero.append(Pieza(BLANCO,"Peon",E,2))
-tablero.append(Pieza(BLANCO,"Peon",F,2))
-tablero.append(Pieza(BLANCO,"Peon",G,2))
-tablero.append(Pieza(BLANCO,"Peon",H,2))
+#tablero.append(Pieza(BLANCO,"Peon",A,2))
+#tablero.append(Pieza(BLANCO,"Peon",B,2))
+#tablero.append(Pieza(BLANCO,"Peon",C,2))
+#tablero.append(Pieza(BLANCO,"Peon",D,2))
+#tablero.append(Pieza(BLANCO,"Peon",E,2))
+#tablero.append(Pieza(BLANCO,"Peon",F,2))
+#tablero.append(Pieza(BLANCO,"Peon",G,2))
+#tablero.append(Pieza(BLANCO,"Peon",H,2))
 
-tablero.append(Pieza(BLANCO,"Torre",A,1))
-tablero.append(Pieza(BLANCO,"Caballo",B,1))
-tablero.append(Pieza(BLANCO,"Alfil",C,1))
-tablero.append(Pieza(BLANCO,"Dama",D,1))
-tablero.append(Pieza(BLANCO,"Rey",E,1))
-tablero.append(Pieza(BLANCO,"Alfil",F,1))
-tablero.append(Pieza(BLANCO,"Caballo",G,1))
-tablero.append(Pieza(BLANCO,"Torre",H,1))
+#tablero.append(Pieza(BLANCO,"Torre",A,1))
+#tablero.append(Pieza(BLANCO,"Caballo",B,1))
+#tablero.append(Pieza(BLANCO,"Alfil",C,1))
+#tablero.append(Pieza(BLANCO,"Dama",D,1))
+#tablero.append(Pieza(BLANCO,"Rey",E,1))
+#tablero.append(Pieza(BLANCO,"Alfil",F,1))
+#tablero.append(Pieza(BLANCO,"Caballo",G,1))
+#tablero.append(Pieza(BLANCO,"Torre",H,1))
+
+
+tablero.append(Pieza(BLANCO,"Rey",G,2))
+tablero.append(Pieza(NEGRO,"Alfil",H,2))
+tablero.append(Pieza(NEGRO,"Alfil",G,1))
+
+tablero.append(Pieza(NEGRO,"Peon",F,3))
+tablero.append(Pieza(NEGRO,"Peon",F,2))
+tablero.append(Pieza(NEGRO,"Peon",G,3))
+tablero.append(Pieza(NEGRO,"Caballo",H,4))
+
 
 tablero.append(Pieza(NEGRO,"Peon",A,7))
 tablero.append(Pieza(NEGRO,"Peon",B,7))
@@ -436,13 +456,22 @@ while running:
             availableEscaques=[]
 
             if Pieza.isinJaque(BLANCO,tablero): 
-              print("Blanco en Jaque")
+              if Pieza.isinMate(BLANCO,tablero):
+                print("Blanco en Jaque Mate")              
+              else:
+                print("Blanco en Jaque")
+            else:
+              if Pieza.isAhogado(BLANCO,tablero) and turno==BLANCO:
+                print("Blanco Ahogado")
             if Pieza.isinJaque(NEGRO,tablero): 
-              print("Negro en Jaque")
-            if Pieza.isinMate(BLANCO,tablero): 
-              print("Blanco en Jaque Mate")              
-            if Pieza.isinMate(NEGRO,tablero): 
-              print("Negro en Jaque Mate")              
+              if Pieza.isinMate(NEGRO,tablero):
+                print("Negro en Jaque Mate")              
+              else:
+                print("Negro en Jaque")
+            else:
+              if Pieza.isAhogado(NEGRO,tablero) and turno==NEGRO:
+                print("Negro Ahogado")
+
             break
         if drag and piez and piez.getColor()==turno: #Solo entramos si es draf, evaluamos de nuevo eso en caso de que el for de arriba mueza pieza
           availableEscaques=piez.AvailablePositionsinTablero2(tablero)
